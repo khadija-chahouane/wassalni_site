@@ -1,0 +1,131 @@
+-- 1. إنشاء قاعدة البيانات (وإذا كانت كاينة مسحها وعاود انشاءها من جديد باش تكون نقيّة)
+DROP DATABASE IF EXISTS transport_db;
+CREATE DATABASE transport_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE transport_db;
+
+-- 2. جدول المستخدمين (Users)
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    cin VARCHAR(50) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    gender VARCHAR(20) NOT NULL,
+    role ENUM('client', 'chauffeur', 'admin') NOT NULL DEFAULT 'client',
+    verification_code VARCHAR(255) DEFAULT NULL,
+    is_verified TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. جدول السيارات والرحلات (Vehicles)
+CREATE TABLE vehicles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    marque VARCHAR(100) NOT NULL,
+    modele VARCHAR(100) NOT NULL,
+    ville_depart VARCHAR(100) NOT NULL,
+    ville_arrivee VARCHAR(100) NOT NULL,
+    prix DECIMAL(10,2) NOT NULL,
+    places INT NOT NULL DEFAULT 4,
+    disponible BOOLEAN NOT NULL DEFAULT TRUE,
+    chauffeur_id INT NULL,
+    FOREIGN KEY (chauffeur_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- 4. جدول الحجوزات (Reservations)
+CREATE TABLE reservations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    vehicle_id INT NOT NULL,
+    date_voyage DATETIME NOT NULL,
+    nombre_places INT NOT NULL DEFAULT 1,
+    statut ENUM('en_attente', 'confirmee', 'annulee') NOT NULL DEFAULT 'en_attente',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
+);
+
+-- 5. جدول الإشعارات (Notifications)
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    message VARCHAR(255) NOT NULL,
+    lien VARCHAR(255) NULL,
+    is_read TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 6. جدول الرسائل (Messages)
+CREATE TABLE messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reservation_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    contenu TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (reservation_id) REFERENCES reservations(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 7. إضافة سيارات جاهزة في البداية باش تبان في الواجهة وتقدري تحجزي منها
+INSERT INTO vehicles (marque, modele, ville_depart, ville_arrivee, prix, places, disponible) VALUES
+('Dacia', 'Logan', 'Casablanca', 'Rabat', 100, 4, 1),
+('Renault', 'Express', 'Casablanca', 'Marrakech', 250, 6, 1),
+('Hyundai', 'i10', 'Rabat', 'Fes', 180, 4, 1),
+('Peugeot', '208', 'Casablanca', 'Fes', 220, 4, 1),
+('Renault', 'Clio 5', 'Rabat', 'Casablanca', 120, 4, 1),
+('Dacia', 'Sandero', 'Fes', 'Meknes', 70, 4, 1),
+('Hyundai', 'i20', 'Marrakech', 'Agadir', 200, 4, 1),
+('Toyota', 'Yaris', 'Casablanca', 'Tanger', 280, 4, 1),
+('Volkswagen', 'Golf 7', 'Rabat', 'Fes', 190, 4, 1),
+('Dacia', 'Dokker', 'Casablanca', 'El Jadida', 100, 6, 1),
+('Renault', 'Kangoo', 'Fes', 'Rabat', 180, 6, 1),
+('Dacia', 'Lodgy', 'Marrakech', 'Casablanca', 260, 7, 1);
+
+USE transport_db;
+
+-- 1. تعديل جدول السيارات أو الرحلات باش يولي يدعم الرحلات الحضرية (داخل المدينة)
+-- نقدروا نعتبروا ville_depart و ville_arrivee يقبلوا حتى أسماء الأحياء والأقسام داخل المدينة
+ALTER TABLE vehicles 
+    ADD COLUMN IF NOT EXISTS type_trajet ENUM('inter_ville', 'intra_ville') NOT NULL DEFAULT 'inter_ville',
+    ADD COLUMN IF NOT EXISTS quartier_depart VARCHAR(150) NULL,
+    ADD COLUMN IF NOT EXISTS quartier_arrivee VARCHAR(150) NULL;
+
+-- 2. جدول لتتبع طلبات السائق (Ride Requests / Matching)
+CREATE TABLE IF NOT EXISTS ride_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    driver_id INT NULL,
+    lieu_depart VARCHAR(150) NOT NULL,
+    lieu_arrivee VARCHAR(150) NOT NULL,
+    prix_propose DECIMAL(10,2) NOT NULL,
+    statut ENUM('en_attente', 'acceptee', 'refusee', 'terminee') NOT NULL DEFAULT 'en_attente',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (driver_id) REFERENCES users(id) ON DELETE SET NULL
+);
+USE transport_db;
+
+-- 1. إضافة تفضيل الجنس في جدول المستخدمين والسيارات
+ALTER TABLE users 
+    ADD COLUMN IF NOT EXISTS preferred_gender_match VARCHAR(20) DEFAULT 'any';
+
+ALTER TABLE vehicles 
+    ADD COLUMN IF NOT EXISTS driver_gender VARCHAR(20) DEFAULT 'ذكر';
+
+-- 2. تحديث جدول طلبات الرحلات لدعم التفاوض والكيلومترات
+DROP TABLE IF EXISTS ride_requests;
+CREATE TABLE ride_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id INT NOT NULL,
+    driver_id INT NULL,
+    lieu_depart VARCHAR(150) NOT NULL,
+    lieu_arrivee VARCHAR(150) NOT NULL,
+    distance_km DECIMAL(6,2) NOT NULL,
+    prix_propose DECIMAL(10,2) NOT NULL, -- الثمن المقترح من طرف الكليون
+    prix_chauffeur DECIMAL(10,2) NULL,  -- الثمن المقترح أو المعدل من طرف الشيفور
+    statut ENUM('en_attente', 'negociation', 'acceptee', 'refusee', 'terminee') NOT NULL DEFAULT 'en_attente',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (driver_id) REFERENCES users(id) ON DELETE SET NULL
+);
