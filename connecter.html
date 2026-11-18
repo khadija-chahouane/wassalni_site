@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Login & Register</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="splash-screen" id="splashScreen">
+    <div class="splash-logo">
+        <div class="splash-mark">W</div>
+        <h1>Welcome to Wasalni!</h1>
+        <p>Your journey starts here. Enjoy a comfortable and safe ride wherever you go.</p>
+        <br>
+        <p>Travel smart. Travel with Wasalni.</p>
+    </div>
+</div>
+
+<div class="container" id="container">
+
+    <!-- SIGN UP FORM -->
+    <div class="form-container sign-up">
+        <form action="auth.php" method="POST">
+            <h1>Create Account</h1>
+            
+            <input type="hidden" name="action" value="signup">
+
+            <div class="social-icons">
+                <a href="#">G+</a>
+                <a href="#">f</a>
+                <a href="#">◉</a>
+                <a href="#">in</a>
+            </div>
+
+            <input type="text" name="fullname" placeholder="Name" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="text" name="cin" placeholder="carte national" required>
+            <input type="tel" name="phone" placeholder="telephone" required>
+            <input type="password" name="password" placeholder="Password" required>
+            
+            <select name="gender" required>
+                <option value="" disabled selected>اختاري الجنس</option>
+                <option value="ذكـر">ذكر</option>
+                <option value="أنثى">أنثى</option>
+            </select>
+
+            <button type="submit">SIGN UP</button>
+        </form>
+    </div>
+
+    <!-- SIGN IN FORM -->
+    <div class="form-container sign-in">
+        <form action="auth.php" method="POST">
+            <h1>Sign In</h1>
+
+            <input type="hidden" name="action" value="signin">
+
+            <div class="social-icons">
+                <a href="#">G+</a>
+                <a href="#">f</a>
+                <a href="#">◉</a>
+                <a href="#">in</a>
+            </div>
+
+            <span>or use your email password</span>
+
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Password" required>
+
+            <a href="#">Forget Your Password?</a>
+
+            <button type="submit">SIGN IN</button>
+        </form>
+    </div>
+
+    <!-- TOGGLE CONTAINER -->
+    <div class="toggle-container">
+        <div class="toggle">
+            <div class="toggle-panel toggle-left">
+                <h1>Welcome Back!</h1>
+                <img src="images\Sticker .06" alt="" width="150">
+                <p>Enter your personal details to use all of site features</p>
+                <button class="hidden" id="login">SIGN IN</button>
+            </div>
+
+            <div class="toggle-panel toggle-right">
+                <h1>Hello, Friend!</h1>
+                <img src="images\Sticker .06" alt="" width="150">
+                <p>Register with your personal details to use all of site features</p>
+                <button class="hidden" id="register">SIGN UP</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
